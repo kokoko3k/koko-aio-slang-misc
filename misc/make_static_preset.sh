@@ -1,12 +1,19 @@
 #!/bin/bash
 
+# Example usage:
+# make_static_preset.sh \
+# /koko/koko-aio-slang/Presets-ng/Monitor-Screen_Hmask-Screen_SlotMask_Taller.slangp \
+# /koko/koko-aio-slang/shaders-ng/config.inc \
+# /tmp/Monitor-Screen_Hmask-Screen_SlotMask_Taller.static.inc 
+
 preset_file="$1"
 pragma_parameter_file="$2"
 out_file2="$3"
 
 
-temp_file=/tmp/slangp.temp
-out_file=/tmp/out.slangp
+
+temp_file=/tmp/slangp$$.temp
+out_file=/tmp/out$$.slangp
 
 OPWD="$PWD"
 
@@ -22,11 +29,12 @@ while grep "#reference " "$out_file" ; do
         mv "$temp_file" "$out_file"
 
     #don't append the main referenced .slangp, use keyword shader0 to match it
-    if !(grep "shader0=\|shader0 =" "$reference_file") ; then
+    if !(grep "shader0=\|shader0 =" "$reference_file" >/dev/null) ; then
     #append reference file to working file
         echo "appending it..."
         cat "$reference_file" >> "$out_file"
     fi
+    
 done
 
 
@@ -50,12 +58,17 @@ done
 IFS=$'\n'
 
 echo creating defines
-for l in $(cat $out_file2 | tr -d "=") ; do
-    echo '#define' $l | xargs
+for l in $(cat $out_file2 | tr -d "=" | grep -vi LABEL0) ; do
+    #echo "#ifndef $(echo $l|cut -d " " -f 1)"
+    echo '    #define' $l | xargs
+    #echo "#endif"
+    echo
 done
 
 
 echo "made $out_file2"
+
+rm $out_file
 
 cd $OPWD
 
